@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>虚拟形象AI助手</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+  
+  <!-- 配置Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            secondary: '#818CF8',
+            accent: '#C7D2FE',
+            dark: '#1F2937',
+            light: '#F9FAFB'
+          },
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .animate-bounce-slow {
+        animation: bounce 3s infinite;
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+      .bg-gradient-custom {
+        background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+      }
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
+  
+  <!-- 引入Inter字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* 禁用页面整体滚动 */
+    html, body {
+      overflow: hidden !important;
+      height: 100%;
+      background: #F6F8FC;
+    }
+    /* 主内容区固定宽度和居中 */
+    main {
+      background: none;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      max-width: 1200px;
+      min-height: 700px;
+      gap: 32px;
+      margin: 0 auto;
+      padding: 32px 0;
+    }
+    .avatar-panel {
+      width: 32%;
+      min-width: 320px;
+      max-width: 380px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 4px 32px 0 rgba(129,140,248,0.10);
+      padding: 40px 24px 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .chat-panel {
+      width: 68%;
+      min-width: 0;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 6px 32px 0 rgba(79,70,229,0.08);
+      display: flex;
+      flex-direction: column;
+      padding: 32px 32px 24px 32px;
+      min-height: 700px;
+      max-height: 900px;
+    }
+    /* 聊天消息区内部滚动 */
+    #chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: 420px;
+      min-height: 200px;
+      margin-bottom: 16px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px 12px;
+      box-shadow: none;
+    }
+    /* 输入区和按钮美化 */
+    #user-input {
+      background: #F6F8FC;
+      border-radius: 12px;
+      border: 1.5px solid #E0E7FF;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    #user-input:focus {
+      border: 1.5px solid #4F46E5;
+      background: #fff;
+    }
+    #send-btn {
+      border-radius: 12px;
+      background: #4F46E5;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 8px 0 rgba(79,70,229,0.10);
+      letter-spacing: 0.02em;
+      transition: background 0.2s, transform 0.1s;
+    }
+    #send-btn:hover {
+      background: #6366F1;
+    }
+    #send-btn:active {
+      transform: scale(0.97);
+    }
+    .quick-reply {
+      border-radius: 9999px;
+      background: #F6F8FC;
+      border: 1px solid #E0E7FF;
+      transition: background 0.2s, border 0.2s;
+      color: #4F46E5;
+      font-weight: 500;
+    }
+    .quick-reply:hover {
+      background: #E0E7FF;
+      border: 1px solid #818CF8;
+      color: #3730A3;
+    }
+    /* 功能区卡片美化 */
+    .grid > div {
+      border-radius: 1.25rem;
+      box-shadow: 0 2px 12px 0 rgba(129,140,248,0.08);
+      transition: box-shadow 0.2s;
+      background: #fff;
+    }
+    .grid > div:hover {
+      box-shadow: 0 6px 24px 0 rgba(79,70,229,0.12);
+    }
+    /* 页脚美化 */
+    footer {
+      border-radius: 1.5rem 1.5rem 0 0;
+      box-shadow: 0 -2px 12px 0 rgba(129,140,248,0.06);
+      background: #fff;
+    }
+    /* 响应式优化 */
+    @media (max-width: 1024px) {
+      .main-container {
+        flex-direction: column;
+        gap: 24px;
+        padding: 16px 0;
+        min-height: unset;
+      }
+      .avatar-panel, .chat-panel {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        border-radius: 20px;
+        min-height: unset;
+        max-height: unset;
+        padding: 24px 12px;
+      }
+      .chat-panel {
+        padding: 24px 12px 16px 12px;
+      }
+      #chat-messages {
+        max-height: 260px;
+        min-height: 120px;
+        padding: 10px 6px;
+      }
+    }
+    /* 聊天区填满主内容区 */
+    .chat-panel {
+      min-height: 900px;
+      max-height: none;
+    }
+    @media (max-width: 1024px) {
+      .chat-panel {
+        min-height: 600px;
+      }
+    }
+    /* 聊天区适中高度和宽度，居中美观 */
+    .chat-panel {
+      min-height: 500px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      max-height: 700px;
+    }
+    @media (max-width: 1024px) {
+      .chat-panel {
+        min-height: 350px;
+        max-width: 100%;
+        max-height: 500px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-md fixed w-full z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-10 h-10 rounded-full bg-gradient-custom flex items-center justify-center">
+          <i class="fa fa-comment text-white text-xl"></i>
+        </div>
+        <h1 class="text-xl font-bold text-primary">Virtual Avatar AI Assistant</h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button id="lang-toggle-btn" class="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors px-3 py-1 rounded-lg border border-gray-200">
+          <i class="fa fa-language"></i>
+          <span id="lang-toggle-text">EN</span>
+        </button>
+        <button class="md:hidden text-gray-600 hover:text-primary transition-colors">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow pt-16 pb-20">
+    <div class="main-container">
+      <div class="avatar-panel">
+          <div class="absolute top-0 right-0 bg-primary/10 w-40 h-40 rounded-full -mr-20 -mt-20"></div>
+          <div class="absolute bottom-0 left-0 bg-secondary/10 w-32 h-32 rounded-full -ml-16 -mb-16"></div>
+          
+          <div class="relative z-10">
+            <h2 class="text-2xl font-bold mb-6 text-center text-dark">Andrej AI</h2>
+            
+            <!-- 虚拟形象容器 -->
+            <div class="relative w-full h-[400px] flex items-center justify-center">
+              <!-- 动漫形象 - 用SVG示例 -->
+              <div class="w-full h-full flex items-center justify-center">
+                <video id="avatar-video" class="w-[250px] h-[350px] rounded-full object-cover bg-gray-100" autoplay loop muted playsinline>
+                  <source src="avatar1.mp4" type="video/mp4">
+                  您的浏览器不支持 video 标签。
+                </video>
+              </div>
+              
+              <!-- 语音指示器 - 默认隐藏 -->
+              <div id="voice-indicator" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 opacity-0 transition-opacity duration-300">
+                <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <div class="w-2 h-2 rounded-full bg-primary animate-pulse" style="animation-delay: 0.2s"></div>
+                <div class="w-2 h-2 rounded-full bg-primary animate-pulse" style="animation-delay: 0.4s"></div>
+                <span class="text-sm text-primary">Thinking...</span>
+              </div>
+            </div>
+            
+            <!-- 表情按钮 -->
+            <div class="flex justify-center space-x-8 mt-6">
+               <button class="avatar-btn w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center transition-colors border-2 border-transparent" data-avatar="0" title="Smile">
+                 <i class="fa fa-smile-o text-lg text-primary"></i>
+               </button>
+               <button class="avatar-btn w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center transition-colors border-2 border-transparent" data-avatar="1" title="Surprised">
+                 <i class="fa fa-meh-o text-lg text-primary"></i>
+               </button>
+               <button class="avatar-btn w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center transition-colors border-2 border-transparent" data-avatar="2" title="Confused">
+                 <i class="fa fa-frown-o text-lg text-primary"></i>
+               </button>
+               <button class="avatar-btn w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center transition-colors border-2 border-transparent" data-avatar="3" title="Happy">
+                 <i class="fa fa-smile-o text-lg text-primary"></i>
+               </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 聊天区 -->
+        <div class="chat-panel">
+          <div class="bg-white rounded-2xl shadow-lg flex-grow overflow-hidden flex flex-col">
+            <!-- 聊天消息区 -->
+            <div id="chat-messages" class="flex-grow p-6 overflow-y-auto max-h-[600px] space-y-6">
+              <!-- 系统消息 -->
+              <div class="flex justify-center">
+                <div class="bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-600">
+                  Hello! I am your virtual AI assistant. How can I help you?
+                </div>
+              </div>
+              
+              <!-- 示例AI回复 -->
+              <div class="flex items-start space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-custom flex items-center justify-center flex-shrink-0">
+                  <i class="fa fa-robot text-white"></i>
+                </div>
+                <div class="bg-primary/10 rounded-xl rounded-tl-none p-4 max-w-[80%]">
+                  <p class="text-dark">The name's Andrej—Elon's freshest AI. Ani's my wife. Got questions? Ask fast, ‘cause I hate answering this crap</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 输入区 -->
+            <div class="border-t border-gray-100 p-4">
+              <div class="flex space-x-3">
+                <div class="flex-grow relative">
+                  <textarea id="user-input" class="w-full p-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-all" rows="2" placeholder="Type your question..."></textarea>
+                  <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+                    <button class="text-gray-400 hover:text-primary transition-colors" id="voice-input-btn">
+                      <i class="fa fa-microphone"></i>
+                    </button>
+                    <span class="text-xs text-gray-400" id="char-count">0/500</span>
+                  </div>
+                </div>
+                <button id="send-btn" class="bg-primary hover:bg-primary/90 text-white rounded-lg px-6 py-3 flex items-center justify-center transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <span>Send</span>
+                  <i class="fa fa-paper-plane ml-2"></i>
+                </button>
+              </div>
+              
+              <!-- 快捷回复 -->
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button class="quick-reply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm transition-colors">What can you do?</button>
+                <button class="quick-reply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm transition-colors">Introduce yourself</button>
+                <button class="quick-reply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm transition-colors">Recommend a movie</button>
+                <button class="quick-reply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm transition-colors">How is the weather today?</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 聊天区增大：移除功能区卡片后，聊天区高度自适应填满主内容区 -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <p class="text-sm text-gray-500">© 2025 Virtual Avatar AI Assistant. All rights reserved.</p>
+        </div>
+        
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+            <i class="fa fa-github"></i>
+          </a>
+          <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+            <i class="fa fa-twitter"></i>
+          </a>
+          <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+            <i class="fa fa-linkedin"></i>
+          </a>
+        </div>
+        
+        <div class="mt-4 md:mt-0">
+          <div class="flex space-x-4 text-sm">
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">Terms of Service</a>
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">Help Center</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 初始化 Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5Z5ieEbAcfQX0kxGSn9ldGXhzvAwx_8M",
+      authDomain: "chat-294cc.firebaseapp.com",
+      databaseURL: "https://chat-294cc-default-rtdb.firebaseio.com",
+      projectId: "chat-294cc",
+      storageBucket: "chat-294cc.appspot.com",
+      messagingSenderId: "913615304269",
+      appId: "1:913615304269:web:0274ffaccb8e6b678e4e04",
+      measurementId: "G-SJR9NDW86B"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const functions = firebase.app().functions('us-central1');
+
+    // 多语言文本映射
+    const langMap = {
+      zh: {
+        title: '虚拟形象AI助手',
+        assistant: '虚拟助手',
+        sysMsg: '你好！我是你的虚拟AI助手，有什么可以帮助你的吗？',
+        aiExample: '我可以回答你提出的问题，为你提供信息和建议，或者只是陪你聊天。你想了解些什么呢？',
+        inputPlaceholder: '输入你的问题...',
+        send: '发送',
+        quick1: '你能做什么？',
+        quick2: '介绍一下你自己',
+        quick3: '推荐一部电影',
+        quick4: '今天天气如何？',
+        history: '历史对话',
+        historyDesc: '查看之前的聊天记录',
+        settings: '设置',
+        settingsDesc: '调整助手偏好',
+        features: '功能',
+        featuresDesc: '探索更多能力',
+        feedback: '反馈',
+        feedbackDesc: '提供使用反馈',
+        privacy: '隐私政策',
+        terms: '服务条款',
+        help: '帮助中心',
+        copyright: '© 2025 虚拟形象AI助手. 保留所有权利.'
+      },
+      en: {
+        title: 'Andrej AI Assistant',
+        assistant: 'Andrej AI',
+        sysMsg: 'Hello! I am your virtual AI assistant. How can I help you?',
+        aiExample: 'I can answer your questions, provide information and advice, or just chat with you. What would you like to know?',
+        inputPlaceholder: 'Type your question...',
+        send: 'Send',
+        quick1: 'What can you do?',
+        quick2: 'Introduce yourself',
+        quick3: 'Recommend a movie',
+        quick4: 'How is the weather today?',
+        history: 'History',
+        historyDesc: 'View previous chats',
+        settings: 'Settings',
+        settingsDesc: 'Adjust assistant preferences',
+        features: 'Features',
+        featuresDesc: 'Explore more abilities',
+        feedback: 'Feedback',
+        feedbackDesc: 'Give feedback',
+        privacy: 'Privacy Policy',
+        terms: 'Terms of Service',
+        help: 'Help Center',
+        copyright: '© 2025 Virtual Avatar AI Assistant. All rights reserved.'
+      }
+    };
+
+    function setLang(lang) {
+      const t = langMap[lang];
+      // 标题
+      document.title = t.title;
+      document.querySelector('h1').textContent = t.title;
+      // 虚拟助手标题
+      document.querySelector('.avatar-panel h2').textContent = t.assistant;
+      // 系统消息
+      const sysMsg = document.querySelector('#chat-messages .flex.justify-center .bg-gray-100');
+      if (sysMsg) sysMsg.textContent = t.sysMsg;
+      // 示例AI回复
+      const aiExample = document.querySelector('#chat-messages .bg-primary\/10 p');
+      if (aiExample) aiExample.textContent = t.aiExample;
+      // 输入框placeholder
+      document.getElementById('user-input').placeholder = t.inputPlaceholder;
+      // 发送按钮
+      document.getElementById('send-btn').querySelector('span').textContent = t.send;
+      // 快捷回复
+      const quicks = document.querySelectorAll('.quick-reply');
+      if (quicks.length >= 4) {
+        quicks[0].textContent = t.quick1;
+        quicks[1].textContent = t.quick2;
+        quicks[2].textContent = t.quick3;
+        quicks[3].textContent = t.quick4;
+      }
+      // 功能区
+      const cards = document.querySelectorAll('.grid > div');
+      if (cards.length >= 4) {
+        cards[0].querySelector('h3').textContent = t.history;
+        cards[0].querySelector('p').textContent = t.historyDesc;
+        cards[1].querySelector('h3').textContent = t.settings;
+        cards[1].querySelector('p').textContent = t.settingsDesc;
+        cards[2].querySelector('h3').textContent = t.features;
+        cards[2].querySelector('p').textContent = t.featuresDesc;
+        cards[3].querySelector('h3').textContent = t.feedback;
+        cards[3].querySelector('p').textContent = t.feedbackDesc;
+      }
+      // 页脚
+      const footerLinks = document.querySelectorAll('footer .flex.space-x-4.text-sm a');
+      if (footerLinks.length >= 3) {
+        footerLinks[0].textContent = t.privacy;
+        footerLinks[1].textContent = t.terms;
+        footerLinks[2].textContent = t.help;
+      }
+      // 版权
+      const copyright = document.querySelector('footer p.text-sm');
+      if (copyright) copyright.textContent = t.copyright;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // 获取DOM元素
+      const chatMessages = document.getElementById('chat-messages');
+      const userInput = document.getElementById('user-input');
+      const sendBtn = document.getElementById('send-btn');
+      const voiceInputBtn = document.getElementById('voice-input-btn');
+      const voiceIndicator = document.getElementById('voice-indicator');
+      const charCount = document.getElementById('char-count');
+      const quickReplyBtns = document.querySelectorAll('.quick-reply');
+      const navbar = document.getElementById('navbar');
+      
+      // 字符计数
+      userInput.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = `${count}/500`;
+        
+        if (count > 450) {
+          charCount.classList.add('text-red-500');
+        } else {
+          charCount.classList.remove('text-red-500');
+        }
+      });
+      
+      // 发送消息到真实AI
+      async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+        
+        addMessageToChat('user', message);
+        userInput.value = '';
+        charCount.textContent = '0/500';
+        voiceIndicator.style.opacity = '1';
+
+        let aiReplied = false;
+        try {
+          const chatWithOpenAI = functions.httpsCallable('chatWithOpenAI');
+          const result = await chatWithOpenAI({ message: message });
+
+          voiceIndicator.style.opacity = '0';
+
+          if (result && result.data && result.data.reply) {
+            addMessageToChat('ai', result.data.reply);
+            aiReplied = true;
+            animateMouth();
+          } else {
+            addMessageToChat('ai', '网络或服务器异常，请稍后再试。');
+            aiReplied = true;
+          }
+        } catch (error) {
+          voiceIndicator.style.opacity = '0';
+          if (!aiReplied) {
+            addMessageToChat('ai', '网络或服务器异常，请稍后再试。');
+          }
+        }
+      }
+      
+      // 添加消息到聊天界面
+      function addMessageToChat(sender, message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = sender === 'user' 
+          ? 'flex items-start space-x-3 justify-end' 
+          : 'flex items-start space-x-3';
+        
+        if (sender === 'user') {
+          messageDiv.innerHTML = `
+            <div class="bg-primary text-white rounded-xl rounded-tr-none p-4 max-w-[80%]">
+              <p>${message}</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+              <i class="fa fa-user text-gray-500"></i>
+            </div>
+          `;
+        } else {
+          messageDiv.innerHTML = `
+            <div class="w-10 h-10 rounded-full bg-gradient-custom flex items-center justify-center flex-shrink-0">
+              <i class="fa fa-robot text-white"></i>
+            </div>
+            <div class="bg-primary/10 rounded-xl rounded-tl-none p-4 max-w-[80%]">
+              <p class="text-dark">${message}</p>
+            </div>
+          `;
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        autoSwitchAvatar();
+      }
+      
+      // 点击发送按钮
+      sendBtn.addEventListener('click', sendMessage);
+      
+      // 按Enter键发送消息
+      userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // 快捷回复
+      quickReplyBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          userInput.value = this.textContent;
+          charCount.textContent = `${userInput.value.length}/500`;
+          sendMessage();
+        });
+      });
+      
+      // 语音输入按钮动画
+      voiceInputBtn.addEventListener('click', function() {
+        this.classList.toggle('text-primary');
+        this.classList.toggle('text-red-500');
+        
+        if (this.classList.contains('text-red-500')) {
+          // 模拟语音输入
+          this.innerHTML = '<i class="fa fa-stop"></i>';
+          voiceIndicator.style.opacity = '1';
+          voiceIndicator.innerHTML = `
+            <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+            <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" style="animation-delay: 0.2s"></div>
+            <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" style="animation-delay: 0.4s"></div>
+            <span class="text-sm text-red-500">录音中...</span>
+          `;
+          
+          // 模拟3秒后结束录音
+          setTimeout(() => {
+            this.classList.toggle('text-primary');
+            this.classList.toggle('text-red-500');
+            this.innerHTML = '<i class="fa fa-microphone"></i>';
+            voiceIndicator.style.opacity = '0';
+            
+            // 模拟语音识别结果
+            const randomResponses = [
+              '你今天过得怎么样？',
+              '给我讲个笑话吧',
+              '推荐一首好听的歌',
+              '什么是人工智能？'
+            ];
+            userInput.value = randomResponses[Math.floor(Math.random() * randomResponses.length)];
+            charCount.textContent = `${userInput.value.length}/500`;
+            sendMessage();
+          }, 3000);
+        } else {
+          this.innerHTML = '<i class="fa fa-microphone"></i>';
+          voiceIndicator.style.opacity = '0';
+        }
+      });
+      
+      // 导航栏滚动效果
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 10) {
+          navbar.classList.add('py-2');
+          navbar.classList.remove('py-3');
+          navbar.classList.add('shadow-lg');
+        } else {
+          navbar.classList.add('py-3');
+          navbar.classList.remove('py-2');
+          navbar.classList.remove('shadow-lg');
+        }
+      });
+      
+      // 表情按钮点击效果
+      document.querySelectorAll('.animate-bounce-slow').forEach(el => {
+        el.addEventListener('click', function() {
+          this.classList.add('scale-110');
+          setTimeout(() => {
+            this.classList.remove('scale-110');
+          }, 300);
+        });
+      });
+
+      // 虚拟形象切换逻辑
+      const avatarVideo = document.getElementById('avatar-video');
+      const avatarBtns = document.querySelectorAll('.avatar-btn');
+      const avatarSources = [
+        'avatar1.mp4',
+        'avatar2.mp4',
+        'avatar3.mp4',
+        'avatar4.mp4'
+      ];
+      let currentAvatar = 0;
+      let messageCount = 0;
+
+      function switchAvatar(index) {
+        currentAvatar = index;
+        avatarVideo.querySelector('source').src = avatarSources[index];
+        avatarVideo.load();
+        avatarBtns.forEach((btn, i) => {
+          if (i === index) {
+            btn.classList.add('border-primary');
+          } else {
+            btn.classList.remove('border-primary');
+          }
+        });
+      }
+      // 初始化高亮
+      switchAvatar(0);
+
+      avatarBtns.forEach((btn, idx) => {
+        btn.addEventListener('click', function() {
+          switchAvatar(idx);
+        });
+      });
+
+      // 对话计数自动切换虚拟形象
+      function autoSwitchAvatar() {
+        messageCount++;
+        if (messageCount % 3 === 0) {
+          switchAvatar((currentAvatar + 1) % avatarSources.length);
+        }
+      }
+
+      // 语言切换按钮逻辑
+      const langBtn = document.getElementById('lang-toggle-btn');
+      const langText = document.getElementById('lang-toggle-text');
+      let lang = 'en';
+      setLang(lang);
+      if (langBtn) {
+        langBtn.addEventListener('click', function() {
+          if (lang === 'zh') {
+            lang = 'en';
+            langText.textContent = '中';
+            setLang('en');
+          } else {
+            lang = 'zh';
+            langText.textContent = 'EN';
+            setLang('zh');
+          }
+        });
+      }
+    });
+    
+    // 简单的口型动画
+    function animateMouth() {
+      const mouth = document.getElementById('mouth');
+      const originalShape = mouth.getAttribute('d');
+      
+      // 动画序列
+      const animationShapes = [
+        'M130 135 Q150 150 170 135', // 微笑
+        'M130 130 Q150 140 170 130', // 正常
+        'M130 135 Q150 145 170 135', // 小开口
+        'M130 130 Q150 140 170 130'  // 正常
+      ];
+      
+      let index = 0;
+      const animationInterval = setInterval(() => {
+        mouth.setAttribute('d', animationShapes[index]);
+        index = (index + 1) % animationShapes.length;
+      }, 200);
+      
+      // 5秒后恢复原来的表情
+      setTimeout(() => {
+        clearInterval(animationInterval);
+        mouth.setAttribute('d', originalShape);
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
+    
