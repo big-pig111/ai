@@ -530,11 +530,16 @@
       });
       
       // 发送消息到真实AI
+      let chatHistory = [];
       async function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
         
         addMessageToChat('user', message);
+
+        // 构造 history，只保留最近5轮（每轮包含user和ai）
+        const historyToSend = chatHistory.slice(-10); // 5轮*2=10条
+
         userInput.value = '';
         charCount.textContent = '0/500';
         voiceIndicator.style.opacity = '1';
@@ -542,16 +547,21 @@
         let aiReplied = false;
         try {
           const chatWithOpenAI = functions.httpsCallable('chatWithOpenAI');
-          const result = await chatWithOpenAI({ message: message });
+          const result = await chatWithOpenAI({ message: message, history: historyToSend });
 
           voiceIndicator.style.opacity = '0';
 
           if (result && result.data && result.data.reply) {
             if (result.data.imageUrl) {
-              // 如果有图片，显示图片和回复
               addMessageToChat('ai', result.data.reply + '<br><img src="' + result.data.imageUrl + '" style="max-width:320px;border-radius:12px;margin-top:8px;">');
+              // 记录AI图片回复
+              chatHistory.push({ role: 'user', content: message });
+              chatHistory.push({ role: 'assistant', content: result.data.reply });
             } else {
               addMessageToChat('ai', result.data.reply);
+              // 记录AI文本回复
+              chatHistory.push({ role: 'user', content: message });
+              chatHistory.push({ role: 'assistant', content: result.data.reply });
             }
             aiReplied = true;
             animateMouth();
