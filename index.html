@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kia</title>
+  <title>Virologist</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome -->
@@ -234,6 +234,38 @@
   </style>
 </head>
 <body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+  <!-- 病毒背景装饰 -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div style="position:absolute;left:5vw;top:8vh;font-size:60px;opacity:0.13;">🦠</div>
+    <div style="position:absolute;right:10vw;top:20vh;font-size:80px;opacity:0.10;">🦠</div>
+    <div style="position:absolute;left:20vw;bottom:10vh;font-size:48px;opacity:0.10;">🦠</div>
+    <div style="position:absolute;right:18vw;bottom:18vh;font-size:100px;opacity:0.08;">🦠</div>
+    <div style="position:absolute;left:50vw;top:50vh;font-size:120px;opacity:0.07;">🦠</div>
+    <div style="position:absolute;left:10vw;top:60vh;font-size:90px;opacity:0.09;">🦠</div>
+    <div style="position:absolute;right:30vw;top:75vh;font-size:70px;opacity:0.11;">🦠</div>
+    <div style="position:absolute;left:70vw;top:15vh;font-size:55px;opacity:0.12;">🦠</div>
+    <div style="position:absolute;right:5vw;bottom:5vh;font-size:110px;opacity:0.06;">🦠</div>
+    <div style="position:absolute;left:35vw;top:30vh;font-size:65px;opacity:0.10;">🦠</div>
+    <div style="position:absolute;left:60vw;bottom:20vh;font-size:85px;opacity:0.09;">🦠</div>
+    <div style="position:absolute;right:40vw;top:10vh;font-size:50px;opacity:0.13;">🦠</div>
+    <div style="position:absolute;left:80vw;bottom:30vh;font-size:75px;opacity:0.08;">🦠</div>
+    <div style="position:absolute;right:60vw;bottom:40vh;font-size:95px;opacity:0.07;">🦠</div>
+    <!-- 新增更丰富的病毒表情，明暗有层次 -->
+    <div style="position:absolute;left:15vw;top:15vh;font-size:40px;opacity:0.18;">🦠</div>
+    <div style="position:absolute;right:25vw;top:5vh;font-size:100px;opacity:0.05;">🦠</div>
+    <div style="position:absolute;left:55vw;bottom:5vh;font-size:60px;opacity:0.15;">🦠</div>
+    <div style="position:absolute;right:15vw;bottom:25vh;font-size:120px;opacity:0.04;">🦠</div>
+    <div style="position:absolute;left:30vw;top:80vh;font-size:80px;opacity:0.16;">🦠</div>
+    <div style="position:absolute;right:80vw;top:40vh;font-size:45px;opacity:0.20;">🦠</div>
+    <div style="position:absolute;left:75vw;bottom:5vh;font-size:130px;opacity:0.03;">🦠</div>
+    <div style="position:absolute;right:50vw;top:60vh;font-size:55px;opacity:0.17;">🦠</div>
+    <div style="position:absolute;left:40vw;bottom:40vh;font-size:100px;opacity:0.06;">🦠</div>
+    <div style="position:absolute;right:70vw;bottom:10vh;font-size:70px;opacity:0.14;">🦠</div>
+    <div style="position:absolute;left:60vw;top:10vh;font-size:90px;opacity:0.12;">🦠</div>
+    <div style="position:absolute;right:20vw;bottom:60vh;font-size:60px;opacity:0.19;">🦠</div>
+    <div style="position:absolute;left:10vw;bottom:30vh;font-size:50px;opacity:0.21;">🦠</div>
+    <div style="position:absolute;right:40vw;bottom:80vh;font-size:80px;opacity:0.09;">🦠</div>
+  </div>
   <!-- 顶部导航 -->
   <header class="bg-white shadow-md fixed w-full z-50 transition-all duration-300" id="navbar">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -245,6 +277,10 @@
       </div>
       
       <div class="flex items-center space-x-4">
+        <!-- 代币合约占位 -->
+        <div id="token-contract" class="flex items-center px-3 py-1 rounded-lg border border-gray-200 bg-gray-50 text-primary font-semibold text-sm mr-2">
+          🦠 Token: <span class="ml-1">SOON</span>
+        </div>
         <button id="lang-toggle-btn" class="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors px-3 py-1 rounded-lg border border-gray-200">
           <i class="fa fa-language"></i>
           <span id="lang-toggle-text">EN</span>
@@ -264,14 +300,14 @@
           <div class="absolute bottom-0 left-0 bg-secondary/10 w-32 h-32 rounded-full -ml-16 -mb-16"></div>
           
           <div class="relative z-10">
-            <h2 class="text-2xl font-bold mb-6 text-center text-dark">Kia AI</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-dark">Virologist AI</h2>
             
             <!-- 虚拟形象容器 -->
             <div class="relative w-full h-[400px] flex items-center justify-center">
               <!-- 动漫形象 - 用SVG示例 -->
               <div class="w-full h-full flex items-center justify-center">
                 <video id="avatar-video" class="w-[250px] h-[350px] rounded-full object-cover bg-gray-100" autoplay loop muted playsinline>
-                  <source src="1.mp4" type="video/mp4">
+                  <source src="avatar1.mp4" type="video/mp4">
                   您的浏览器不支持 video 标签。
                 </video>
               </div>
@@ -321,7 +357,7 @@
                   <i class="fa fa-robot text-white"></i>
                 </div>
                 <div class="bg-primary/10 rounded-xl rounded-tl-none p-4 max-w-[80%]">
-                  <p class="text-dark">I'm Kia, Elon Musk's new AI. Ani is my sister. Stay away from him—I don't like answering questions.</p>
+                  <p class="text-dark">I'm Virologist, Elon Musk's new AI. Stay away from him—I don't like answering questions.</p>
                 </div>
               </div>
             </div>
@@ -433,8 +469,8 @@
         copyright: '© 2025 虚拟形象AI助手. 保留所有权利.'
       },
       en: {
-        title: 'Kia AI Assistant',
-        assistant: 'Kia AI',
+        title: 'Virologist AI Assistant',
+        assistant: 'Virologist AI',
         sysMsg: 'Hello! I am your virtual AI assistant. How can I help you?',
         aiExample: 'I can answer your questions, provide information and advice, or just chat with you. What would you like to know?',
         inputPlaceholder: 'Type your question...',
@@ -698,10 +734,10 @@
       const avatarVideo = document.getElementById('avatar-video');
       const avatarBtns = document.querySelectorAll('.avatar-btn');
       const avatarSources = [
-        '1.mp4',
-        '2.mp4',
-        '3.mp4',
-        '5.mp4'
+        'avatar1.mp4',
+        'avatar2.mp4',
+        'avatar3.mp4',
+        'avatar4.mp4'
       ];
       let currentAvatar = 0;
       let messageCount = 0;
@@ -739,7 +775,7 @@
       function playSpeakingAvatar() {
         const source = avatarVideo.querySelector('source');
         const originalSrc = source.src;
-        source.src = '4.MP4';
+        source.src = '5.MP4';
         avatarVideo.load();
         avatarVideo.play();
         setTimeout(() => {
