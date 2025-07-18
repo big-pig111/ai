@@ -547,7 +547,12 @@
           voiceIndicator.style.opacity = '0';
 
           if (result && result.data && result.data.reply) {
-            addMessageToChat('ai', result.data.reply);
+            if (result.data.imageUrl) {
+              // 如果有图片，显示图片和回复
+              addMessageToChat('ai', result.data.reply + '<br><img src="' + result.data.imageUrl + '" style="max-width:320px;border-radius:12px;margin-top:8px;">');
+            } else {
+              addMessageToChat('ai', result.data.reply);
+            }
             aiReplied = true;
             animateMouth();
           } else {
