@@ -307,7 +307,7 @@
               <!-- 动漫形象 - 用SVG示例 -->
               <div class="w-full h-full flex items-center justify-center">
                 <video id="avatar-video" class="w-[250px] h-[350px] rounded-full object-cover bg-gray-100" autoplay loop muted playsinline>
-                  <source src="avatar1.mp4" type="video/mp4">
+                  <source src="1.mp4" type="video/mp4">
                   您的浏览器不支持 video 标签。
                 </video>
               </div>
@@ -734,10 +734,10 @@
       const avatarVideo = document.getElementById('avatar-video');
       const avatarBtns = document.querySelectorAll('.avatar-btn');
       const avatarSources = [
-        'avatar1.mp4',
-        'avatar2.mp4',
-        'avatar3.mp4',
-        'avatar4.mp4'
+        '1.mp4',
+        '2.mp4',
+        '3.mp4',
+        '5.mp4'
       ];
       let currentAvatar = 0;
       let messageCount = 0;
@@ -775,7 +775,7 @@
       function playSpeakingAvatar() {
         const source = avatarVideo.querySelector('source');
         const originalSrc = source.src;
-        source.src = '5.MP4';
+        source.src = '4.MP4';
         avatarVideo.load();
         avatarVideo.play();
         setTimeout(() => {
